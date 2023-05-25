@@ -76,7 +76,7 @@ class MediaService : Service(), MediaPlayerCallback {
             .build()
         mediaPlayer?.setAudioAttributes(attribute)
 
-        val afd = applicationContext.resources.openRawResourceFd(R.raw.big_thunder)
+        val afd = applicationContext.resources.openRawResourceFd(R.raw.slipknot_liberate)
 
         try {
             mediaPlayer?.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)

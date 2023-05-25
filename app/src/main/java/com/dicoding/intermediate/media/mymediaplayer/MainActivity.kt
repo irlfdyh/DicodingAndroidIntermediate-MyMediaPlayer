@@ -4,15 +4,23 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.content.pm.PackageManager
 import android.os.*
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import android.widget.Button
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
+import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
 
     companion object {
         const val TAG = "MainActivity"
+
+        @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+        private const val POST_NOTIFICATION = android.Manifest.permission.POST_NOTIFICATIONS
     }
 
     private var serviceMessenger: Messenger? = null
@@ -31,9 +39,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                Toast.makeText(this, "Akses notifikasi telah diberikan", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Akses notifikasi telah ditolak", Toast.LENGTH_SHORT).show()
+            }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        if (Build.VERSION.SDK_INT >= 33) {
+            setupNotification()
+        }
 
         val btnPlay = findViewById<Button>(R.id.btn_play)
         val btnStop = findViewById<Button>(R.id.btn_stop)
@@ -72,6 +93,26 @@ class MainActivity : AppCompatActivity() {
         boundServiceIntent.action = MediaService.ACTION_DESTROY
 
         startService(boundServiceIntent)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun setupNotification() {
+        when {
+            ContextCompat.checkSelfPermission(
+                this,
+                POST_NOTIFICATION
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                // Already granted
+            }
+            shouldShowRequestPermissionRationale(POST_NOTIFICATION) -> {
+                // Show rationale message
+            }
+            else -> {
+                if (Build.VERSION.SDK_INT >= 33) {
+                    requestPermissionLauncher.launch(POST_NOTIFICATION)
+                }
+            }
+        }
     }
 
 }
